@@ -1,1309 +1,568 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0008">
-<title>CodeAi • Programming Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
-
-<style>
-/* ─────────────────────────────────────
-   RESET & BASE
-───────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  /* Core palette */
-  --bg:         #07000d;
-  --surface:    #0e0015;
-  --surface2:   #130019;
-  --card:       #0f0016;
-
-  /* Accents */
-  --red:        #ff1744;
-  --red2:       #ff4569;
-  --magenta:    #e040fb;
-  --magenta2:   #ea80fc;
-  --hot:        #ff2d78;
-
-  /* Neutrals */
-  --text:       #f0d8f8;
-  --muted:      #4a2060;
-  --muted2:     #7a4890;
-
-  /* Borders */
-  --border:     rgba(255,23,68,0.12);
-  --border2:    rgba(255,23,68,0.22);
-  --border3:    rgba(224,64,251,0.18);
-
-  /* States */
-  --success:    #00e676;
-  --danger:     #ff1744;
-  --user-bg:    rgba(255,23,68,0.07);
-  --code-bg:    #060008;
-
-  /* Glow */
-  --glow-red:   rgba(255,23,68,0.35);
-  --glow-mag:   rgba(224,64,251,0.3);
-}
-
-html { height: 100%; }
-body {
-  height: 100%; min-height: 100dvh;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ─────────────────────────────────────
-   BACKGROUND — canvas only, CSS-light
-───────────────────────────────────── */
-#bg-canvas {
-  position: fixed; inset: 0;
-  z-index: 0; pointer-events: none;
-  will-change: transform;
-}
-
-/* Static grid — CSS is free */
-.grid {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255,23,68,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,23,68,0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
-}
-
-/* Vignette */
-.vignette {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(7,0,13,0.7) 100%);
-}
-
-/* ─────────────────────────────────────
-   LAYOUT
-───────────────────────────────────── */
-.app {
-  position: relative; z-index: 1;
-  display: flex; height: 100dvh;
-  overflow: hidden;
-}
-
-/* ─────────────────────────────────────
-   SIDEBAR
-───────────────────────────────────── */
-.sidebar {
-  width: 268px; min-width: 268px;
-  display: flex; flex-direction: column;
-  background: rgba(14,0,21,0.97);
-  border-right: 1px solid var(--border);
-  position: relative; overflow: hidden;
-  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-/* Animated top edge */
-.sidebar::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--red) 40%, var(--magenta) 70%, transparent 100%);
-  animation: edgeShimmer 3s ease-in-out infinite;
-}
-@keyframes edgeShimmer {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 1; }
-}
-
-/* Corner glow */
-.sidebar::after {
-  content: '';
-  position: absolute; top: -80px; left: -80px;
-  width: 220px; height: 220px;
-  background: radial-gradient(circle, rgba(255,23,68,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-/* ── HEADER ── */
-.sidebar-header {
-  padding: 20px 16px 16px;
-  border-bottom: 1px solid var(--border);
-  position: relative; z-index: 1;
-  flex-shrink: 0;
-}
-
-.logo { display: flex; align-items: center; gap: 11px; }
-
-.logo-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, #1a0022, #2a000a);
-  border: 1px solid rgba(255,23,68,0.4);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
-  position: relative;
-  box-shadow: 0 0 16px rgba(255,23,68,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
-  animation: iconPulse 3s ease-in-out infinite;
-}
-@keyframes iconPulse {
-  0%, 100% { box-shadow: 0 0 16px rgba(255,23,68,0.25), inset 0 1px 0 rgba(255,255,255,0.05); }
-  50%       { box-shadow: 0 0 28px rgba(255,23,68,0.45), inset 0 1px 0 rgba(255,255,255,0.05); }
-}
-
-.logo-name {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 22px; font-weight: 700; letter-spacing: 2px;
-  background: linear-gradient(120deg, #fff 0%, var(--red2) 50%, var(--magenta2) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200% auto;
-  animation: shimmer 4s linear infinite;
-}
-@keyframes shimmer {
-  0%   { background-position: 0% center; }
-  100% { background-position: 200% center; }
-}
-
-.logo-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8.5px; color: var(--red2); opacity: 0.6;
-  letter-spacing: 1.5px; margin-top: 3px;
-}
-
-/* New chat button */
-.btn-new {
-  margin-top: 14px; width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: 7px;
-  background: linear-gradient(135deg, rgba(255,23,68,0.1), rgba(224,64,251,0.08));
-  border: 1px solid var(--border2);
-  color: var(--red2);
-  padding: 10px 14px; border-radius: 10px;
-  cursor: pointer;
-  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
-  letter-spacing: 0.3px;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  position: relative; overflow: hidden;
-}
-.btn-new:hover {
-  background: linear-gradient(135deg, rgba(255,23,68,0.18), rgba(224,64,251,0.14));
-  border-color: rgba(255,23,68,0.45);
-  box-shadow: 0 0 20px rgba(255,23,68,0.18);
-  transform: translateY(-1px);
-}
-.btn-new:active { transform: translateY(0); }
-
-/* Ripple */
-.ripple {
-  position: absolute; border-radius: 50%;
-  background: rgba(255,23,68,0.25);
-  transform: scale(0);
-  animation: rippleAnim 0.55s ease-out forwards;
-  pointer-events: none;
-}
-@keyframes rippleAnim {
-  to { transform: scale(4); opacity: 0; }
-}
-
-/* ── HISTORY ── */
-.history {
-  flex: 1; overflow-y: auto; padding: 8px;
-  scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
-}
-.history::-webkit-scrollbar { width: 3px; }
-.history::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-.history-heading {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase;
-  color: var(--muted); padding: 8px 10px 6px;
-}
-
-.hist-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 10px; border-radius: 8px; cursor: pointer;
-  border: 1px solid transparent; margin-bottom: 2px;
-  transition: background 0.15s, border-color 0.15s;
-  position: relative; overflow: hidden;
-}
-.hist-item::before {
-  content: '';
-  position: absolute; left: 0; top: 25%; bottom: 25%;
-  width: 2px; background: var(--red);
-  border-radius: 0 2px 2px 0;
-  transform: scaleY(0); transition: transform 0.2s;
-  box-shadow: 0 0 8px var(--glow-red);
-}
-.hist-item:hover { background: rgba(255,23,68,0.05); border-color: var(--border); }
-.hist-item:hover::before, .hist-item.active::before { transform: scaleY(1); }
-.hist-item.active { background: rgba(255,23,68,0.08); border-color: var(--border2); }
-
-.hist-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: var(--muted); flex-shrink: 0;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-.hist-item.active .hist-dot { background: var(--red); box-shadow: 0 0 8px var(--glow-red); }
-
-.hist-title {
-  flex: 1; font-size: 12px; color: var(--muted2);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.hist-item.active .hist-title { color: var(--text); }
-
-.hist-del {
-  opacity: 0; background: none; border: none;
-  color: #ff4060; cursor: pointer; font-size: 11px;
-  padding: 2px 5px; border-radius: 4px;
-  transition: opacity 0.15s;
-}
-.hist-item:hover .hist-del { opacity: 1; }
-
-/* ── SIDEBAR FOOTER ── */
-.sidebar-foot {
-  padding: 12px 14px; border-top: 1px solid var(--border);
-  display: flex; justify-content: space-between; align-items: center;
-  flex-shrink: 0;
-}
-.foot-info {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; color: var(--muted); letter-spacing: 1px;
-}
-.btn-clear {
-  background: none; border: none; color: var(--muted);
-  cursor: pointer; font-size: 8px;
-  font-family: 'JetBrains Mono', monospace; letter-spacing: 1px;
-  transition: color 0.2s;
-}
-.btn-clear:hover { color: var(--danger); }
-
-/* ─────────────────────────────────────
-   OVERLAY (mobile)
-───────────────────────────────────── */
-.overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-  z-index: 40;
-}
-.overlay.visible { display: block; }
-
-/* ─────────────────────────────────────
-   MAIN AREA
-───────────────────────────────────── */
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-
-/* ── TOPBAR ── */
-.topbar {
-  height: 50px; min-height: 50px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px;
-  background: rgba(14,0,21,0.92);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  position: relative; z-index: 10; flex-shrink: 0;
-}
-.topbar::after {
-  content: '';
-  position: absolute; bottom: 0; left: 10%; right: 10%; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--red), var(--magenta), transparent);
-  opacity: 0.5;
-}
-
-.tb-left { display: flex; align-items: center; gap: 10px; }
-
-.btn-menu {
-  display: none; /* hidden desktop */
-  background: none; border: none; color: var(--muted2); cursor: pointer;
-  padding: 7px; border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
-  align-items: center; justify-content: center;
-}
-.btn-menu:hover { background: rgba(255,23,68,0.1); color: var(--red2); }
-
-.status-chip {
-  display: flex; align-items: center; gap: 7px;
-  background: rgba(255,23,68,0.07);
-  border: 1px solid rgba(255,23,68,0.2);
-  border-radius: 20px; padding: 4px 12px;
-}
-.pulse-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 8px var(--success);
-  animation: pulseDot 2s ease-in-out infinite;
-}
-@keyframes pulseDot {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
-.chip-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; color: var(--red2); letter-spacing: 0.5px;
-}
-
-.tb-right { display: flex; align-items: center; gap: 8px; }
-.btn-settings {
-  display: flex; align-items: center; gap: 5px;
-  background: none; border: none; color: var(--muted2); cursor: pointer;
-  font-size: 11px; font-family: 'Outfit', sans-serif;
-  padding: 6px 10px; border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
-}
-.btn-settings:hover { background: rgba(255,23,68,0.1); color: var(--red2); }
-.tb-sep { width: 1px; height: 16px; background: var(--border); }
-.tb-byline {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; color: var(--muted); letter-spacing: 1px;
-}
-
-/* ─────────────────────────────────────
-   MESSAGES
-───────────────────────────────────── */
-.messages {
-  flex: 1; overflow-y: auto;
-  scroll-behavior: smooth;
-  scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
-  overscroll-behavior: contain;
-}
-.messages::-webkit-scrollbar { width: 3px; }
-.messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-.msg-inner { max-width: 720px; margin: 0 auto; padding: 24px 16px 8px; }
-
-/* ── WELCOME ── */
-.welcome {
-  display: flex; flex-direction: column;
-  align-items: center; text-align: center;
-  min-height: 100%; padding: 40px 20px 32px;
-  justify-content: center;
-}
-
-.welcome-icon-wrap {
-  position: relative; margin-bottom: 28px;
-}
-.welcome-hexagon {
-  width: 86px; height: 86px;
-  background: linear-gradient(135deg, rgba(255,23,68,0.12), rgba(224,64,251,0.1));
-  border: 1px solid rgba(255,23,68,0.3);
-  border-radius: 22px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 40px;
-  animation: floatIcon 4s ease-in-out infinite;
-  position: relative; z-index: 1;
-  box-shadow:
-    0 0 0 1px rgba(255,23,68,0.1),
-    0 0 40px rgba(255,23,68,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-}
-@keyframes floatIcon {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-9px); }
-}
-
-/* Orbiting ring */
-.orbit-ring {
-  position: absolute; inset: -16px;
-  border: 1px solid transparent;
-  border-top-color: var(--red);
-  border-right-color: rgba(224,64,251,0.4);
-  border-radius: 50%;
-  animation: orbitSpin 5s linear infinite;
-}
-.orbit-ring::after {
-  content: '';
-  position: absolute; top: -4px; left: 50%;
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--red);
-  box-shadow: 0 0 12px var(--glow-red);
-  transform: translateX(-50%);
-}
-@keyframes orbitSpin { to { transform: rotate(360deg); } }
-
-/* Second ring */
-.orbit-ring2 {
-  position: absolute; inset: -28px;
-  border: 1px solid transparent;
-  border-bottom-color: rgba(224,64,251,0.3);
-  border-left-color: rgba(255,23,68,0.2);
-  border-radius: 50%;
-  animation: orbitSpin 8s linear infinite reverse;
-}
-
-.welcome h1 {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: clamp(26px, 6vw, 40px);
-  font-weight: 700; letter-spacing: 2px;
-  background: linear-gradient(120deg, #fff 0%, var(--red2) 45%, var(--magenta2) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text; background-size: 200% auto;
-  animation: shimmer 4s linear infinite;
-  margin-bottom: 10px;
-}
-.welcome-desc {
-  color: var(--muted2); font-size: 14px;
-  max-width: 360px; line-height: 1.65; margin-bottom: 36px;
-}
-.welcome-desc strong {
-  color: var(--red2);
-  font-family: 'JetBrains Mono', monospace; font-size: 12px;
-}
-
-.quick-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px; width: 100%; max-width: 460px;
-}
-.quick-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 15px;
-  text-align: left; cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
-  position: relative; overflow: hidden;
-}
-.quick-card::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,23,68,0.06), rgba(224,64,251,0.04));
-  opacity: 0; transition: opacity 0.2s;
-}
-.quick-card:hover::before { opacity: 1; }
-.quick-card:hover {
-  border-color: rgba(255,23,68,0.35);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(255,23,68,0.1);
-}
-.quick-card:active { transform: translateY(0); }
-.q-tag {
-  font-family: 'JetBrains Mono', monospace; font-size: 8px;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--red2); margin-bottom: 6px;
-}
-.q-label { font-size: 12px; color: var(--muted2); line-height: 1.45; }
-
-/* ── MESSAGE ── */
-.message {
-  display: flex; gap: 12px; margin-bottom: 22px;
-  animation: msgSlide 0.3s ease forwards;
-  opacity: 0;
-}
-@keyframes msgSlide {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.msg-avatar {
-  width: 30px; height: 30px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0; margin-top: 2px;
-}
-.message.user .msg-avatar {
-  background: linear-gradient(135deg, #1a0008, #2a0012);
-  border: 1px solid rgba(255,23,68,0.35);
-}
-.message.assistant .msg-avatar {
-  background: linear-gradient(135deg, #120018, #1a0022);
-  border: 1px solid rgba(224,64,251,0.35);
-  box-shadow: 0 0 10px rgba(224,64,251,0.12);
-}
-.msg-body { flex: 1; min-width: 0; }
-.msg-role {
-  font-family: 'JetBrains Mono', monospace; font-size: 8.5px;
-  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 7px;
-}
-.message.user .msg-role      { color: rgba(255,69,105,0.7); }
-.message.assistant .msg-role  { color: rgba(224,64,251,0.65); }
-
-.msg-content { font-size: 14px; line-height: 1.76; color: var(--text); }
-.message.user .msg-content {
-  background: var(--user-bg);
-  border: 1px solid rgba(255,23,68,0.15);
-  border-radius: 4px 14px 14px 14px;
-  padding: 12px 15px;
-}
-
-/* Markdown */
-.msg-content p              { margin-bottom: 10px; }
-.msg-content p:last-child   { margin-bottom: 0; }
-.msg-content h1, .msg-content h2, .msg-content h3 {
-  font-family: 'Rajdhani', sans-serif; font-weight: 700;
-  letter-spacing: 1px; margin: 18px 0 9px; color: #fff;
-}
-.msg-content h1 { font-size: 19px; }
-.msg-content h2 { font-size: 16px; }
-.msg-content h3 { font-size: 14px; }
-.msg-content ul, .msg-content ol { padding-left: 18px; margin-bottom: 10px; }
-.msg-content li { margin-bottom: 4px; }
-.msg-content code:not(pre code) {
-  font-family: 'JetBrains Mono', monospace; font-size: 12px;
-  background: rgba(255,23,68,0.09);
-  border: 1px solid rgba(255,23,68,0.2);
-  border-radius: 4px; padding: 1px 6px; color: var(--red2);
-}
-.msg-content pre {
-  position: relative;
-  background: var(--code-bg) !important;
-  border: 1px solid rgba(255,23,68,0.15);
-  border-radius: 10px; margin: 14px 0; overflow: hidden;
-}
-.msg-content pre::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--red), var(--magenta), transparent);
-  opacity: 0.5;
-}
-.msg-content pre code {
-  font-family: 'JetBrains Mono', monospace !important;
-  font-size: 12px !important; padding: 14px 16px !important;
-  display: block; overflow-x: auto;
-}
-.msg-content blockquote {
-  border-left: 3px solid var(--red);
-  padding-left: 14px; color: var(--muted2);
-  margin: 10px 0; font-style: italic;
-}
-.msg-content strong { color: #fff; font-weight: 600; }
-.msg-content a { color: var(--red2); text-decoration: none; }
-.msg-content a:hover { text-decoration: underline; }
-.msg-content table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
-.msg-content th {
-  background: rgba(255,23,68,0.09); border: 1px solid rgba(255,23,68,0.15);
-  padding: 8px 12px; text-align: left; font-weight: 600; color: var(--red2);
-  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1px;
-}
-.msg-content td { border: 1px solid rgba(255,23,68,0.08); padding: 7px 12px; }
-.msg-content tr:nth-child(even) td { background: rgba(255,23,68,0.03); }
-
-/* Code header */
-.code-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 13px;
-  border-bottom: 1px solid rgba(255,23,68,0.1);
-  background: rgba(255,23,68,0.03);
-}
-.code-lang {
-  font-family: 'JetBrains Mono', monospace; font-size: 9px;
-  color: var(--muted2); letter-spacing: 1.5px; text-transform: uppercase;
-}
-.btn-copy {
-  font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px;
-  background: rgba(255,23,68,0.09); border: 1px solid rgba(255,23,68,0.2);
-  color: var(--red2); padding: 3px 8px; border-radius: 4px;
-  cursor: pointer; transition: background 0.2s, box-shadow 0.2s;
-}
-.btn-copy:hover { background: rgba(255,23,68,0.18); box-shadow: 0 0 10px rgba(255,23,68,0.2); }
-
-/* Thinking dots */
-.thinking {
-  display: flex; gap: 5px; padding: 6px 0; align-items: center;
-}
-.thinking span {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--magenta); opacity: 0.3;
-  animation: think 1.3s ease-in-out infinite;
-}
-.thinking span:nth-child(2) { animation-delay: 0.18s; }
-.thinking span:nth-child(3) { animation-delay: 0.36s; }
-@keyframes think {
-  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-  40%           { opacity: 1; transform: scale(1.25); box-shadow: 0 0 8px rgba(224,64,251,0.6); }
-}
-
-/* Typing cursor */
-.cursor {
-  display: inline-block; width: 2px; height: 1em;
-  background: var(--magenta); vertical-align: middle; margin-left: 2px;
-  animation: blinkCursor 0.8s step-end infinite;
-  box-shadow: 0 0 6px rgba(224,64,251,0.6);
-}
-@keyframes blinkCursor { 50% { opacity: 0; } }
-
-/* ─────────────────────────────────────
-   INPUT AREA
-───────────────────────────────────── */
-.input-zone {
-  padding: 12px 16px env(safe-area-inset-bottom, 16px);
-  background: rgba(14,0,21,0.97);
-  border-top: 1px solid var(--border);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  flex-shrink: 0; position: relative;
-}
-.input-zone::before {
-  content: '';
-  position: absolute; top: 0; left: 5%; right: 5%; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--red), var(--magenta), transparent);
-  opacity: 0.4;
-}
-
-.input-inner { max-width: 720px; margin: 0 auto; }
-.input-row {
-  display: flex; align-items: flex-end; gap: 8px;
-  background: rgba(18,0,26,0.9);
-  border: 1px solid rgba(255,23,68,0.18);
-  border-radius: 14px; padding: 8px 8px 8px 14px;
-  transition: border-color 0.25s, box-shadow 0.25s;
-}
-.input-row:focus-within {
-  border-color: rgba(255,23,68,0.45);
-  box-shadow: 0 0 0 3px rgba(255,23,68,0.07), 0 0 24px rgba(255,23,68,0.07);
-}
-.input-row textarea {
-  flex: 1; background: none; border: none; outline: none;
-  color: var(--text); font-family: 'Outfit', sans-serif;
-  font-size: 14px; line-height: 1.55; resize: none;
-  min-height: 24px; max-height: 130px; padding-top: 3px;
-}
-.input-row textarea::placeholder { color: var(--muted); }
-
-.btn-send {
-  width: 36px; height: 36px; flex-shrink: 0;
-  background: linear-gradient(135deg, var(--red), var(--hot));
-  border: none; border-radius: 10px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 0 18px rgba(255,23,68,0.35);
-}
-.btn-send:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 30px rgba(255,23,68,0.55);
-}
-.btn-send:active  { transform: scale(0.94); }
-.btn-send.busy {
-  background: linear-gradient(135deg, #5a000f, #3a0008);
-  animation: busyPulse 1.2s ease-in-out infinite;
-}
-@keyframes busyPulse {
-  0%, 100% { box-shadow: 0 0 18px rgba(255,23,68,0.3); }
-  50%       { box-shadow: 0 0 36px rgba(255,23,68,0.6); }
-}
-.btn-send svg { color: #fff; }
-
-.input-hint {
-  text-align: center; margin-top: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; letter-spacing: 1.5px; color: var(--muted);
-}
-
-/* ─────────────────────────────────────
-   SETTINGS MODAL
-───────────────────────────────────── */
-.modal-bg {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.78);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  z-index: 200; align-items: center; justify-content: center; padding: 20px;
-}
-.modal-bg.open { display: flex; }
-.modal-box {
-  background: rgba(14,0,21,0.99);
-  border: 1px solid rgba(255,23,68,0.22);
-  border-radius: 18px; padding: 26px;
-  width: 100%; max-width: 350px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 50px rgba(255,23,68,0.06);
-  animation: modalPop 0.25s cubic-bezier(0.4,0,0.2,1);
-  position: relative; overflow: hidden;
-}
-.modal-box::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--red), var(--magenta), transparent);
-}
-@keyframes modalPop {
-  from { opacity: 0; transform: scale(0.94) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-.modal-box h2 {
-  font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
-  letter-spacing: 2px; margin-bottom: 22px;
-  background: linear-gradient(90deg, #fff, var(--red2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.setting { margin-bottom: 18px; }
-.setting-label {
-  font-size: 11px; color: var(--muted2); margin-bottom: 8px;
-  display: flex; justify-content: space-between;
-}
-.setting-label em {
-  color: var(--red2); font-style: normal;
-  font-family: 'JetBrains Mono', monospace;
-}
-input[type="range"] { width: 100%; accent-color: var(--red); cursor: pointer; }
-.range-ends {
-  display: flex; justify-content: space-between; margin-top: 4px;
-  font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--muted);
-  letter-spacing: 1px;
-}
-input[type="number"] {
-  width: 100%; background: rgba(255,23,68,0.05);
-  border: 1px solid rgba(255,23,68,0.18);
-  border-radius: 8px; padding: 9px 12px; color: var(--text);
-  font-family: 'JetBrains Mono', monospace; font-size: 13px;
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-}
-input[type="number"]:focus {
-  border-color: rgba(255,23,68,0.45);
-  box-shadow: 0 0 0 2px rgba(255,23,68,0.07);
-}
-.btn-modal-close {
-  width: 100%; padding: 11px; margin-top: 6px;
-  background: transparent; border: 1px solid rgba(255,23,68,0.2);
-  border-radius: 10px; color: var(--muted2);
-  font-family: 'Outfit', sans-serif; font-size: 13px;
-  cursor: pointer; transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-modal-close:hover {
-  border-color: var(--red); color: var(--red2);
-  box-shadow: 0 0 14px rgba(255,23,68,0.12);
-}
-
-/* ─────────────────────────────────────
-   TOAST
-───────────────────────────────────── */
-.toast {
-  position: fixed; bottom: 80px; left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255,23,68,0.12);
-  border: 1px solid rgba(255,23,68,0.3);
-  color: var(--red2); padding: 10px 20px; border-radius: 10px;
-  font-family: 'JetBrains Mono', monospace; font-size: 12px;
-  z-index: 300; pointer-events: none;
-  animation: toastIn 0.3s ease, toastOut 0.3s ease 3.7s forwards;
-  backdrop-filter: blur(10px); white-space: nowrap;
-}
-@keyframes toastIn  { from { opacity:0; transform:translateX(-50%) translateY(8px); } }
-@keyframes toastOut { to   { opacity:0; transform:translateX(-50%) translateY(8px); } }
-
-/* ─────────────────────────────────────
-   MOBILE — clean, smooth
-───────────────────────────────────── */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed; left: 0; top: 0; bottom: 0;
-    z-index: 50; transform: translateX(-100%);
-    box-shadow: 4px 0 40px rgba(0,0,0,0.6);
-  }
-  .sidebar.open { transform: translateX(0); }
-  .btn-menu { display: flex; }
-  .tb-sep, .tb-byline { display: none; }
-  .msg-inner { padding: 16px 12px 8px; }
-  .welcome { padding: 28px 16px 24px; }
-  .welcome h1 { font-size: 28px; }
-  .input-zone { padding: 10px 12px env(safe-area-inset-bottom, 12px); }
-  .quick-grid { max-width: 100%; }
-}
-@media (max-width: 420px) {
-  .quick-grid { grid-template-columns: 1fr; }
-  .chip-label { font-size: 9px; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAi • Your Local Programming Genius</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflaretests.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+        
+        :root {
+            --primary: 59 130 246;
+        }
+        
+        .chat-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgb(63 63 70) transparent;
+        }
+        
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: rgb(63 63 70);
+            border-radius: 20px;
+        }
+        
+        .message-bubble {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            background: rgb(163 163 163);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        .logo-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+    </style>
 </head>
-<body>
-
-<!-- Background -->
-<canvas id="bg-canvas"></canvas>
-<div class="grid"></div>
-<div class="vignette"></div>
-
-<!-- Mobile overlay -->
-<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
-
-<div class="app">
-
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <div class="logo-icon">⚡</div>
-        <div>
-          <div class="logo-name">CODEAI</div>
-          <div class="logo-badge">GPT-OSS 20B · GROQ</div>
+<body class="bg-zinc-950 text-zinc-100 flex h-screen overflow-hidden font-sans">
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col transition-all duration-300 md:translate-x-0">
+        <!-- Header -->
+        <div class="p-4 border-b border-zinc-800 flex items-center gap-3">
+            <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-inner">🤖</div>
+            <div>
+                <h1 class="logo-font text-3xl font-semibold tracking-tighter text-white">CodeAi</h1>
+                <p class="text-[10px] text-zinc-500 -mt-1">GPT-OSS 20B • Groq Cloud</p>
+            </div>
         </div>
-      </div>
-      <button class="btn-new" id="btnNew" onclick="newChatWithRipple(event)">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-        </svg>
-        New conversation
-      </button>
-    </div>
 
-    <div class="history" id="history">
-      <div class="history-heading">Recent</div>
-    </div>
-
-    <div class="sidebar-foot">
-      <span class="foot-info">V2.0 · BY JEREMIAH</span>
-      <button class="btn-clear" onclick="clearAll()">CLEAR ALL</button>
-    </div>
-  </aside>
-
-  <!-- ── MAIN ── -->
-  <main class="main">
-
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="tb-left">
-        <button class="btn-menu" onclick="toggleSidebar()">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
-        <div class="status-chip">
-          <div class="pulse-dot"></div>
-          <span class="chip-label">gpt-oss-20b · groq</span>
+        <!-- New Chat -->
+        <div class="p-4">
+            <button onclick="newChat()" 
+                    class="w-full flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 transition-colors text-white font-medium py-3.5 px-6 rounded-3xl border border-zinc-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                NEW CHAT
+            </button>
         </div>
-      </div>
-      <div class="tb-right">
-        <button class="btn-settings" onclick="openSettings()">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
-          </svg>
-          Settings
-        </button>
-        <div class="tb-sep"></div>
-        <span class="tb-byline">BY JEREMIAH</span>
-      </div>
-    </div>
 
-    <!-- Messages -->
-    <div class="messages" id="messages"></div>
-
-    <!-- Input -->
-    <div class="input-zone">
-      <div class="input-inner">
-        <div class="input-row">
-          <textarea id="txtInput" rows="1"
-            placeholder="Ask me anything about code…"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}">
-          </textarea>
-          <button class="btn-send" id="btnSend" onclick="send()">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.874L5.999 12zm0 0h7.07"/>
-            </svg>
-          </button>
+        <!-- Chat History -->
+        <div class="flex-1 overflow-y-auto px-3 chat-container" id="chat-history">
+            <!-- Populated by JS -->
         </div>
-        <div class="input-hint">ENTER → SEND &nbsp;·&nbsp; SHIFT+ENTER → NEW LINE</div>
-      </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex items-center gap-2">
+            <div class="flex-1">Powered by Groq • GPT-OSS 20B • Fast</div>
+            <button onclick="clearAllChats()" class="hover:text-red-400 transition-colors">Clear all</button>
+        </div>
     </div>
 
-  </main>
-</div>
+    <!-- MAIN CHAT AREA -->
+    <div class="flex-1 flex flex-col min-w-0">
+        <!-- Top Bar -->
+        <div class="h-14 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-zinc-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400 text-xs font-mono">●</span>
+                    <span class="text-sm font-medium text-zinc-400">GPT-OSS 20B • Groq</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-6 text-sm">
+                <div onclick="showSettings()" class="cursor-pointer flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 002.573-1.066c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00.817 1.194 1.724 1.724 0 01.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 01-2.573 1.066 1.724 1.724 0 01-.817 1.194 1.724 1.724 0 01-.817 1.194c-.94 1.543-.94 3.31 0 3.35 1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 01-2.573 1.066 1.724 1.724 0 01-.817 1.194 1.724 1.724 0 01-.817 1.194c-.94 1.543-.94 3.31 0 3.35a1.724 1.724 0 01-2.573 1.066c-1.543-.94-3.31.826-2.37 2.37a1.724 1.724 0 01-.817 1.194" />
+                    </svg>
+                    Settings
+                </div>
+                <div class="h-6 w-px bg-zinc-800"></div>
+                <div class="text-xs font-mono text-zinc-500">v1.0 • Built by Jeremiah</div>
+            </div>
+        </div>
 
-<!-- Settings modal -->
-<div class="modal-bg" id="modalBg" onclick="modalBgClick(event)">
-  <div class="modal-box">
-    <h2>SETTINGS</h2>
-    <div class="setting">
-      <div class="setting-label">Temperature <em id="tempVal">0.7</em></div>
-      <input type="range" id="tempRange" min="0" max="1" step="0.1" value="0.7"
-        oninput="document.getElementById('tempVal').textContent=this.value">
-      <div class="range-ends"><span>PRECISE</span><span>CREATIVE</span></div>
+        <!-- Messages Area -->
+        <div id="messages" class="flex-1 overflow-y-auto p-6 chat-container space-y-8 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:40px_40px]">
+            <!-- Welcome message injected by JS -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-6 bg-zinc-900 border-t border-zinc-800">
+            <div class="max-w-4xl mx-auto">
+                <div class="relative">
+                    <textarea id="user-input" 
+                              rows="1"
+                              onkeydown="if(event.key === 'Enter' && !event.shiftKey){event.preventDefault(); sendMessage()}"
+                              class="w-full bg-zinc-800 border border-zinc-700 focus:border-blue-500 rounded-3xl py-5 pl-7 pr-20 text-base resize-y min-h-[56px] max-h-[180px] outline-none transition-all"
+                              placeholder="Ask anything about code... (e.g. Debug this Python script)"></textarea>
+                    
+                    <button onclick="sendMessage()"
+                            class="absolute right-3 bottom-3 bg-blue-600 hover:bg-blue-500 transition-colors w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.874L5.999 12zm0 0h7.07" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="text-center text-[10px] text-zinc-500 mt-4 flex items-center justify-center gap-4">
+                    <div>⌘K to focus • Powered by Groq Cloud • Ultra fast</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="setting">
-      <div class="setting-label">Max Tokens</div>
-      <input type="number" id="maxTok" value="8192">
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 rounded-3xl w-full max-w-md p-8">
+            <h2 class="text-2xl font-semibold mb-6">CodeAi Settings</h2>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Temperature</label>
+                    <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.7" 
+                           class="w-full accent-blue-500">
+                    <div class="flex justify-between text-xs text-zinc-500 mt-1">
+                        <span>Precise</span>
+                        <span>Creative</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Max Tokens</label>
+                    <input type="number" id="max-tokens" value="2048" 
+                           class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 w-full text-sm">
+                </div>
+                
+                <div class="pt-4 border-t border-zinc-800">
+                    <button onclick="closeSettings()" 
+                            class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm font-medium transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <button class="btn-modal-close" onclick="closeSettings()">Close</button>
-  </div>
-</div>
 
-<script>
-/* ══════════════════════════════════════
-   OPTIMIZED PARTICLE CANVAS
-   Uses requestAnimationFrame + sparse
-   particle count for smooth 60fps
-══════════════════════════════════════ */
-(function() {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, raf;
-  const PARTICLES = 60;
-  const MAX_DIST  = 110;
-  let pts = [];
+    <script>
+        // ================== CONFIG ==================
+        const GROQ_MODEL = "openai/gpt-oss-20b"
+        const SYSTEM_PROMPT = `You are CodeAi — an elite programming assistant powered by GPT-OSS 20B via Groq. 
+You are extremely good at writing clean, production-ready code in any language. 
+You explain concepts clearly, spot bugs instantly, and always provide complete working examples.
+Use markdown with proper code blocks (specify language). 
+Be concise but thorough. Never refuse a coding request.`
 
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
+        let currentChatId = null
+        let chats = []
+        let isStreaming = false
 
-  function mkPt() {
-    return {
-      x:  Math.random() * W,
-      y:  Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.28,
-      vy: (Math.random() - 0.5) * 0.28,
-      r:  Math.random() * 1.4 + 0.4,
-      op: Math.random() * 0.45 + 0.1,
-      t:  Math.random() * Math.PI * 2,
-    };
-  }
-
-  function init() {
-    resize();
-    pts = Array.from({ length: PARTICLES }, mkPt);
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-
-    pts.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.t += 0.018;
-      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-
-      const alpha = p.op * (0.65 + 0.35 * Math.sin(p.t));
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, 6.283);
-      ctx.fillStyle = `rgba(255,23,68,${alpha})`;
-      ctx.fill();
-    });
-
-    /* Lines — only inner loop needed, skip expensive sqrt with dist² comparison */
-    const D2 = MAX_DIST * MAX_DIST;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const a = pts[i];
-      for (let j = i + 1; j < pts.length; j++) {
-        const b  = pts[j];
-        const dx = a.x - b.x, dy = a.y - b.y;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < D2) {
-          const frac = 1 - d2 / D2;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-          /* Alternate red/magenta lines */
-          const useRed = (i + j) % 3 !== 0;
-          ctx.strokeStyle = useRed
-            ? `rgba(255,23,68,${0.07 * frac})`
-            : `rgba(224,64,251,${0.05 * frac})`;
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
+        // Tailwind script already loaded
+        function initTailwind() {
+            // Nothing needed — script already runs
         }
-      }
-    }
 
-    raf = requestAnimationFrame(draw);
-  }
-
-  window.addEventListener('resize', () => { resize(); });
-  init(); draw();
-})();
-
-/* ══════════════════════════════════════
-   APP
-══════════════════════════════════════ */
-const SYSTEM = `You are CodeAi — an elite programming assistant powered by GPT-OSS 20B via Groq.
-Write clean, production-ready code in any language. Explain clearly, spot bugs instantly.
-Use markdown with proper fenced code blocks. Be concise but complete. Never refuse a coding request.`;
-
-let chatId = null, chats = [], streaming = false;
-
-/* ── Storage ── */
-function load() {
-  try { chats = JSON.parse(localStorage.getItem('cai4') || '[]'); } catch(_) { chats = []; }
-  if (!chats.length) chats = [{ id: Date.now(), title: 'Welcome', msgs: [] }];
-  chatId = chats[0].id;
-  renderHistory();
-}
-function save() { localStorage.setItem('cai4', JSON.stringify(chats)); }
-function cur()  { return chats.find(c => c.id === chatId); }
-
-/* ── Sidebar ── */
-function toggleSidebar() {
-  const s = document.getElementById('sidebar');
-  const o = document.getElementById('overlay');
-  s.classList.toggle('open');
-  o.classList.toggle('visible');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('overlay').classList.remove('visible');
-}
-
-/* ── History ── */
-function renderHistory() {
-  const el = document.getElementById('history');
-  el.innerHTML = '<div class="history-heading">Recent</div>';
-  chats.forEach(c => {
-    const d = document.createElement('div');
-    d.className = 'hist-item' + (c.id === chatId ? ' active' : '');
-    d.innerHTML = `
-      <div class="hist-dot"></div>
-      <div class="hist-title">${esc(c.title)}</div>
-      <button class="hist-del" onclick="delChat(${c.id});event.stopPropagation()">✕</button>`;
-    d.onclick = () => { switchChat(c.id); if (window.innerWidth < 768) closeSidebar(); };
-    el.appendChild(d);
-  });
-}
-
-function switchChat(id) { chatId = id; renderHistory(); renderMsgs(); }
-function delChat(id) {
-  if (chats.length === 1) return;
-  chats = chats.filter(c => c.id !== id);
-  if (chatId === id) chatId = chats[0].id;
-  save(); renderHistory(); renderMsgs();
-}
-function newChat() {
-  const c = { id: Date.now(), title: 'New Chat', msgs: [] };
-  chats.unshift(c); chatId = c.id;
-  save(); renderHistory(); renderMsgs();
-  document.getElementById('txtInput').focus();
-}
-function newChatWithRipple(e) {
-  const btn = e.currentTarget;
-  const r  = document.createElement('span');
-  r.className = 'ripple';
-  const rect = btn.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
-  btn.appendChild(r);
-  setTimeout(() => r.remove(), 600);
-  newChat();
-  if (window.innerWidth < 768) closeSidebar();
-}
-function clearAll() {
-  if (!confirm('Delete all chats?')) return;
-  chats = [{ id: Date.now(), title: 'Welcome', msgs: [] }];
-  chatId = chats[0].id;
-  save(); renderHistory(); renderMsgs();
-}
-
-/* ── Render ── */
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function renderMsgs() {
-  const wrap = document.getElementById('messages');
-  const c = cur();
-
-  if (!c.msgs.length) {
-    wrap.innerHTML = `
-      <div class="msg-inner">
-        <div class="welcome">
-          <div class="welcome-icon-wrap">
-            <div class="orbit-ring2"></div>
-            <div class="orbit-ring"></div>
-            <div class="welcome-hexagon">⚡</div>
-          </div>
-          <h1>HELLO, I'M CODEAI</h1>
-          <p class="welcome-desc">
-            Your intelligent programming partner.<br>
-            Powered by <strong>GPT-OSS 20B</strong> via <strong>Groq Cloud</strong>.
-          </p>
-          <div class="quick-grid">
-            <button class="quick-card" onclick="quickSend('Write a FastAPI REST endpoint for JWT authentication')">
-              <div class="q-tag">FastAPI</div>
-              <div class="q-label">JWT auth endpoint</div>
-            </button>
-            <button class="quick-card" onclick="quickSend('Explain how React hooks work with examples')">
-              <div class="q-tag">React</div>
-              <div class="q-label">Hooks explained</div>
-            </button>
-            <button class="quick-card" onclick="quickSend('Write a binary search in Python with explanation')">
-              <div class="q-tag">Algorithms</div>
-              <div class="q-label">Binary search</div>
-            </button>
-            <button class="quick-card" onclick="quickSend('Debug this: explain common Python async/await mistakes')">
-              <div class="q-tag">Debug</div>
-              <div class="q-label">Async/await pitfalls</div>
-            </button>
-          </div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  wrap.innerHTML = '';
-  const inner = document.createElement('div');
-  inner.className = 'msg-inner';
-
-  c.msgs.forEach((m, i) => {
-    const el = document.createElement('div');
-    el.className = `message ${m.role}`;
-    const isEmpty = m.role === 'assistant' && !m.content;
-    el.innerHTML = `
-      <div class="msg-avatar">${m.role === 'user' ? '👤' : '⚡'}</div>
-      <div class="msg-body">
-        <div class="msg-role">${m.role === 'user' ? 'YOU' : 'CODEAI'}</div>
-        <div class="msg-content" id="mc${i}">
-          ${isEmpty ? '<div class="thinking"><span></span><span></span><span></span></div>' : ''}
-        </div>
-      </div>`;
-    inner.appendChild(el);
-
-    if (!isEmpty) {
-      const mc = document.getElementById(`mc${i}`);
-      if (m.role === 'user') {
-        mc.textContent = m.content;
-      } else {
-        mc.innerHTML = marked.parse(m.content || '');
-        attachCodeHeaders(mc);
-        Prism.highlightAllUnder(mc);
-      }
-    }
-  });
-
-  wrap.appendChild(inner);
-  wrap.scrollTop = wrap.scrollHeight;
-}
-
-function attachCodeHeaders(el) {
-  el.querySelectorAll('pre').forEach(pre => {
-    if (pre.querySelector('.code-header')) return;
-    const code = pre.querySelector('code');
-    const lang = code?.className?.match(/language-(\w+)/)?.[1] || 'code';
-    const hdr = document.createElement('div');
-    hdr.className = 'code-header';
-    hdr.innerHTML = `<span class="code-lang">${lang}</span><button class="btn-copy" onclick="copyCode(this)">COPY</button>`;
-    pre.insertBefore(hdr, pre.firstChild);
-  });
-}
-
-function copyCode(btn) {
-  navigator.clipboard.writeText(btn.closest('pre').querySelector('code').textContent);
-  btn.textContent = '✓ COPIED';
-  setTimeout(() => btn.textContent = 'COPY', 2000);
-}
-
-function liveUpdate(content) {
-  const c = cur();
-  if (!c.msgs.length) return;
-  const last = c.msgs[c.msgs.length - 1];
-  if (last.role !== 'assistant') return;
-  last.content = content;
-  save();
-  const els = document.querySelectorAll('.message.assistant .msg-content');
-  const el  = els[els.length - 1];
-  if (!el) return;
-  el.innerHTML = marked.parse(content) + '<span class="cursor"></span>';
-  attachCodeHeaders(el);
-  Prism.highlightAllUnder(el);
-  const wrap = document.getElementById('messages');
-  wrap.scrollTop = wrap.scrollHeight;
-}
-
-/* ── Send ── */
-async function send() {
-  const ta = document.getElementById('txtInput');
-  const text = ta.value.trim();
-  if (!text || streaming) return;
-
-  streaming = true;
-  document.getElementById('btnSend').classList.add('busy');
-
-  const c = cur();
-  c.msgs.push({ role: 'user', content: text });
-  if (c.msgs.length === 1) c.title = text.length > 38 ? text.slice(0, 35) + '…' : text;
-  save(); renderMsgs();
-  ta.value = ''; ta.style.height = 'auto';
-
-  c.msgs.push({ role: 'assistant', content: '' });
-  save(); renderMsgs();
-
-  const payload = [{ role: 'system', content: SYSTEM }, ...c.msgs];
-  const temp    = parseFloat(document.getElementById('tempRange').value || 1);
-  const maxtok  = parseInt(document.getElementById('maxTok').value || 8192);
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: payload, temperature: temp, max_tokens: maxtok }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '', full = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n'); buf = lines.pop();
-      for (const line of lines) {
-        const t = line.trim();
-        if (!t.startsWith('data: ')) continue;
-        const d = t.slice(6).trim();
-        if (d === '[DONE]') {
-          /* Final clean render */
-          const els = document.querySelectorAll('.message.assistant .msg-content');
-          const el  = els[els.length - 1];
-          if (el) {
-            el.innerHTML = marked.parse(full);
-            attachCodeHeaders(el);
-            Prism.highlightAllUnder(el);
-          }
-          break;
+        // ================== STORAGE ==================
+        function loadChats() {
+            const saved = localStorage.getItem('codeai_chats')
+            if (saved) {
+                chats = JSON.parse(saved)
+            } else {
+                chats = [{
+                    id: Date.now(),
+                    title: "Welcome to CodeAi",
+                    messages: []
+                }]
+            }
+            currentChatId = chats[0].id
+            renderHistory()
         }
-        try {
-          const parsed = JSON.parse(d);
-          const chunk  = parsed?.choices?.[0]?.delta?.content;
-          if (chunk)         { full += chunk; liveUpdate(full); }
-          if (parsed?.error) throw new Error(parsed.error);
-        } catch(e) { if (!e.message?.includes('JSON')) throw e; }
-      }
-    }
-  } catch(err) {
-    console.error(err);
-    c.msgs.pop(); save(); renderMsgs();
-    showToast('❌ ' + err.message);
-  } finally {
-    streaming = false;
-    document.getElementById('btnSend').classList.remove('busy');
-  }
-}
 
-function quickSend(txt) {
-  document.getElementById('txtInput').value = txt;
-  send();
-}
+        function saveChats() {
+            localStorage.setItem('codeai_chats', JSON.stringify(chats))
+        }
 
-/* ── Toast ── */
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 4100);
-}
+        // ================== RENDER HISTORY ==================
+        function renderHistory() {
+            const container = document.getElementById('chat-history')
+            container.innerHTML = `
+                <div class="px-2 py-2 text-xs font-medium text-zinc-500 tracking-widest">HISTORY</div>
+            `
+            
+            chats.forEach(chat => {
+                const isActive = chat.id === currentChatId
+                const div = document.createElement('div')
+                div.className = `group flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer transition-all hover:bg-zinc-800 ${isActive ? 'bg-zinc-800' : ''}`
+                div.innerHTML = `
+                    <div class="flex-1 truncate text-sm">${chat.title}</div>
+                    <button onclick="deleteChat(${chat.id}); event.stopImmediatePropagation()" 
+                            class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500">
+                        ✕
+                    </button>
+                `
+                div.onclick = () => switchChat(chat.id)
+                container.appendChild(div)
+            })
+        }
 
-/* ── Settings ── */
-function openSettings()  { document.getElementById('modalBg').classList.add('open'); }
-function closeSettings() { document.getElementById('modalBg').classList.remove('open'); }
-function modalBgClick(e) { if (e.target === document.getElementById('modalBg')) closeSettings(); }
+        function switchChat(id) {
+            currentChatId = id
+            renderHistory()
+            renderMessages()
+        }
 
-/* ── Init ── */
-window.addEventListener('load', () => {
-  load(); renderMsgs();
+        function deleteChat(id) {
+            if (chats.length === 1) return alert("Can't delete the last chat!")
+            chats = chats.filter(c => c.id !== id)
+            if (currentChatId === id) currentChatId = chats[0].id
+            saveChats()
+            renderHistory()
+            renderMessages()
+        }
 
-  setTimeout(() => document.getElementById('txtInput').focus(), 350);
+        function newChat() {
+            const newChatObj = {
+                id: Date.now(),
+                title: "New Chat",
+                messages: []
+            }
+            chats.unshift(newChatObj)
+            currentChatId = newChatObj.id
+            saveChats()
+            renderHistory()
+            renderMessages()
+            document.getElementById('user-input').focus()
+        }
 
-  document.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault(); document.getElementById('txtInput').focus();
-    }
-    if (e.key === 'Escape') closeSettings();
-  });
+        function clearAllChats() {
+            if (!confirm("Delete ALL chats permanently?")) return
+            chats = [{
+                id: Date.now(),
+                title: "Welcome to CodeAi",
+                messages: []
+            }]
+            currentChatId = chats[0].id
+            saveChats()
+            renderHistory()
+            renderMessages()
+        }
 
-  const ta = document.getElementById('txtInput');
-  ta.addEventListener('input', () => {
-    ta.style.height = 'auto';
-    ta.style.height = Math.min(ta.scrollHeight, 130) + 'px';
-  });
-});
-</script>
+        // ================== MESSAGES RENDER ==================
+        function getCurrentChat() {
+            return chats.find(c => c.id === currentChatId)
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messages')
+            container.innerHTML = ''
+            
+            const chat = getCurrentChat()
+            
+            // Welcome if empty
+            if (chat.messages.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center px-8">
+                        <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-3xl flex items-center justify-center text-7xl mb-8 shadow-2xl">🤖</div>
+                        <h2 class="text-5xl font-semibold logo-font tracking-tighter mb-3">Hello, I'm CodeAi</h2>
+                        <p class="max-w-md text-zinc-400 text-lg">Your personal offline programming expert.<br>Built for speed on your 8GB PC.</p>
+                        
+                        <div class="mt-12 grid grid-cols-2 gap-4 w-full max-w-lg">
+                            <button onclick="quickPrompt('Write a FastAPI endpoint for user registration')" 
+                                    class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-3xl p-5 text-left transition-all">
+                                <div class="text-blue-400 text-sm mb-1">FASTAPI</div>
+                                <div class="font-medium">User registration endpoint</div>
+                            </button>
+                            <button onclick="quickPrompt('Explain how transformers work with code example')" 
+                                    class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-3xl p-5 text-left transition-all">
+                                <div class="text-amber-400 text-sm mb-1">AI CONCEPT</div>
+                                <div class="font-medium">Transformers explained</div>
+                            </button>
+                        </div>
+                    </div>
+                `
+                return
+            }
+            
+            chat.messages.forEach((msg, index) => {
+                const isUser = msg.role === 'user'
+                const bubble = document.createElement('div')
+                bubble.className = `flex ${isUser ? 'justify-end' : 'justify-start'} message-bubble`
+                
+                bubble.innerHTML = `
+                    <div class="${isUser ? 'max-w-[80%] bg-blue-600 text-white' : 'max-w-[80%] bg-zinc-800'} rounded-3xl px-6 py-4">
+                        ${isUser ? 
+                            `<div class="prose prose-invert max-w-none">${msg.content}</div>` : 
+                            `<div id="msg-${index}" class="prose prose-zinc dark:prose-invert max-w-none text-zinc-100"></div>`
+                        }
+                    </div>
+                `
+                container.appendChild(bubble)
+                
+                if (!isUser) {
+                    const contentDiv = document.getElementById(`msg-${index}`)
+                    contentDiv.innerHTML = marked.parse(msg.content)
+                    Prism.highlightAllUnder(contentDiv)
+                    addCopyButtons(contentDiv)
+                }
+            })
+            
+            container.scrollTop = container.scrollHeight
+        }
+
+        function addCopyButtons(container) {
+            container.querySelectorAll('pre').forEach(pre => {
+                if (pre.querySelector('.copy-btn')) return
+                
+                const btn = document.createElement('button')
+                btn.className = `copy-btn absolute top-3 right-3 bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-1 rounded-xl opacity-70 hover:opacity-100 transition-all flex items-center gap-1.5`
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M8 16v-4m4 4v4m-4-8h8" />
+                    </svg>
+                    COPY
+                `
+                btn.onclick = () => {
+                    const code = pre.querySelector('code').textContent
+                    navigator.clipboard.writeText(code)
+                    btn.innerHTML = '✓ COPIED'
+                    setTimeout(() => btn.innerHTML = `COPY`, 2000)
+                }
+                pre.style.position = 'relative'
+                pre.appendChild(btn)
+            })
+        }
+
+        function appendMessage(role, content) {
+            const chat = getCurrentChat()
+            chat.messages.push({ role, content })
+            saveChats()
+            renderMessages()
+        }
+
+        function updateLastMessage(content) {
+            const chat = getCurrentChat()
+            if (chat.messages.length === 0) return
+            const last = chat.messages[chat.messages.length - 1]
+            if (last.role === 'assistant') {
+                last.content = content
+                saveChats()
+                renderMessages() // simple full re-render (fast enough)
+            }
+        }
+
+        // ================== STREAMING ==================
+        async function sendMessage() {
+            const input = document.getElementById('user-input')
+            const text = input.value.trim()
+            if (!text || isStreaming) return
+            
+            isStreaming = true
+            
+            // Add user message
+            const chat = getCurrentChat()
+            chat.messages.push({ role: "user", content: text })
+            
+            // Auto title first message
+            if (chat.messages.length === 1) {
+                chat.title = text.length > 35 ? text.substring(0, 32) + "..." : text
+            }
+            
+            saveChats()
+            renderMessages()
+            input.value = ''
+            
+            // Create assistant placeholder
+            chat.messages.push({ role: "assistant", content: "" })
+            saveChats()
+            renderMessages()
+            
+            // Prepare full payload for Ollama
+            const fullMessages = [
+                { role: "system", content: SYSTEM_PROMPT },
+                ...chat.messages
+            ]
+            
+            try {
+                // Get settings from UI sliders
+                const temperature = parseFloat(document.getElementById('temp-slider')?.value || 1)
+                const max_tokens  = parseInt(document.getElementById('max-tokens')?.value || 8192)
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: fullMessages,
+                        temperature,
+                        max_tokens
+                    })
+                })
+                
+                if (!response.ok) throw new Error(`Server error: ${response.status}`)
+                
+                const reader  = response.body.getReader()
+                const decoder = new TextDecoder()
+                let buffer      = ""
+                let fullContent = ""
+                
+                // ── Parse OpenAI / Groq SSE stream ──────────────────────
+                // Each line looks like:  data: {"choices":[{"delta":{"content":"hi"}}]}
+                // Signaling done:        data: [DONE]
+                // ────────────────────────────────────────────────────────
+                while (true) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    
+                    buffer += decoder.decode(value, { stream: true })
+                    
+                    const lines = buffer.split('\n')
+                    buffer = lines.pop() // hold incomplete last line
+
+                    for (const line of lines) {
+                        const trimmed = line.trim()
+                        if (!trimmed || !trimmed.startsWith('data: ')) continue
+                        
+                        const dataStr = trimmed.slice(6).trim()
+                        
+                        // Stream finished
+                        if (dataStr === '[DONE]') {
+                            // Final render: full markdown + syntax highlighting
+                            const lastMsgDiv = document.querySelector('#messages > div:last-child > div > div')
+                            if (lastMsgDiv) {
+                                lastMsgDiv.innerHTML = marked.parse(fullContent)
+                                Prism.highlightAllUnder(lastMsgDiv)
+                                addCopyButtons(lastMsgDiv)
+                            }
+                            break
+                        }
+                        
+                        try {
+                            const parsed = JSON.parse(dataStr)
+                            
+                            // OpenAI delta format
+                            const delta = parsed?.choices?.[0]?.delta
+                            if (delta?.content) {
+                                fullContent += delta.content
+                                updateLastMessage(fullContent)
+                            }
+
+                            // Handle server-side errors forwarded in stream
+                            if (parsed?.error) {
+                                throw new Error(parsed.error)
+                            }
+
+                        } catch (e) {
+                            if (e.message && !e.message.startsWith('Unexpected')) {
+                                throw e // rethrow real errors, ignore JSON parse blips
+                            }
+                        }
+                    }
+                }
+                
+            } catch (err) {
+                console.error(err)
+                alert("❌ Could not reach the CodeAi backend.\n\nMake sure:\n1. The server is running (node server.js)\n2. Your GROQ_API_KEY is valid in .env\n\nError: " + err.message)
+                // Remove empty assistant message
+                chat.messages.pop()
+                saveChats()
+                renderMessages()
+            } finally {
+                isStreaming = false
+            }
+        }
+
+        // Quick prompt buttons
+        function quickPrompt(prompt) {
+            document.getElementById('user-input').value = prompt
+            sendMessage()
+        }
+
+        // Sidebar toggle for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar')
+            sidebar.classList.toggle('-translate-x-full')
+        }
+
+        // Settings modal
+        function showSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden')
+        }
+        
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden')
+        }
+
+        // ================== BACKEND PROXY ENDPOINT (FastAPI will serve this) ==================
+        // The HTML is served by FastAPI, so /api/chat is available
+
+        // ================== INIT ==================
+        function init() {
+            initTailwind()
+            loadChats()
+            renderMessages()
+            
+            // Auto focus input
+            setTimeout(() => {
+                document.getElementById('user-input').focus()
+            }, 300)
+            
+            // Keyboard shortcut
+            document.addEventListener('keydown', (e) => {
+                if (e.metaKey && e.key === 'k') {
+                    e.preventDefault()
+                    document.getElementById('user-input').focus()
+                }
+            })
+            
+            // Make textarea auto grow
+            const textarea = document.getElementById('user-input')
+            textarea.addEventListener('input', () => {
+                textarea.style.height = 'auto'
+                textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px'
+            })
+        }
+
+        window.onload = init
+    </script>
 </body>
 </html>
