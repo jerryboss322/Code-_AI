@@ -627,16 +627,22 @@ Be concise but thorough. Never refuse a coding request.`
                 }
 
                 inner.appendChild(row)
+            })
 
-                if (!isUser && msg.content !== '') {
+            // ✅ FIX: Append inner to DOM FIRST, then query and populate elements
+            container.appendChild(inner)
+
+            chat.messages.forEach((msg, index) => {
+                if (msg.role !== 'user' && msg.content !== '') {
                     const el = document.getElementById(`msg-${index}`)
-                    el.innerHTML = marked.parse(msg.content)
-                    Prism.highlightAllUnder(el)
-                    addCodeToolbars(el)
+                    if (el) {
+                        el.innerHTML = marked.parse(msg.content)
+                        Prism.highlightAllUnder(el)
+                        addCodeToolbars(el)
+                    }
                 }
             })
 
-            container.appendChild(inner)
             container.scrollTop = container.scrollHeight
         }
 
