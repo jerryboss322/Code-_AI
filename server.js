@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 const client = new Groq({
-  apiKey: "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"
+  apiKey: "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"
 });
 
 app.post("/api/chat", async (req, res) => {
